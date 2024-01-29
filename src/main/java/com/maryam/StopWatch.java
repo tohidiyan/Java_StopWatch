@@ -15,7 +15,7 @@ public class StopWatch {
         START,
         STOP,
         LAP,
-        FINISH;
+        FINISH
     }
     public void startFunction() {
         isRunning = true;
@@ -55,7 +55,7 @@ public class StopWatch {
     public Duration calculateDuration(ArrayList<TimesRecord> timeList) {
         Duration gap = calculateGaps(timeList);
         return Duration.between(timeList.get(0).time() ,Instant.now()).minus(gap);
-    };
+    }
 
     public String changeFormatFromMillisToTime(Duration timeDuration) {
         long Millis = timeDuration.toMillis();

@@ -86,9 +86,7 @@ public class StopWatchGuiFrame {
 
     public JButton setLapButton() {
         JButton lapButton = new JButton("lap");
-        lapButton.addActionListener((e) -> {
-            stopWatch.lapFunction();
-        });
+        lapButton.addActionListener((e) -> stopWatch.lapFunction());
         return lapButton;
     }
 
