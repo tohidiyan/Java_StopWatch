@@ -9,7 +9,7 @@ import java.util.concurrent.TimeUnit;
 public class StopWatchGuiFrame {
 
     StopWatch stopWatch = new StopWatch();
-    JLabel timeLabel = new JLabel();
+    JLabel timeLabel = new JLabel("00 : 00 : 00");
 
 
     public StopWatchGuiFrame() {
@@ -67,7 +67,7 @@ public class StopWatchGuiFrame {
                     timeLabel.setText(stopWatch.changeFormatFromMillisToTime(stopWatch.calculateDuration(stopWatch.timeList)));
                 }
             }, 0, 1, TimeUnit.MILLISECONDS);
-            if (stopWatch.finished) {
+            if (stopWatch.isFinished) {
                 myScheduler.shutdown();
             }
         });

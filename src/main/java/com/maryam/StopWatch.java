@@ -1,6 +1,7 @@
 package com.maryam;
 
 import javax.swing.*;
+import java.text.DecimalFormat;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -8,7 +9,7 @@ import java.util.ArrayList;
 public class StopWatch {
 
     public boolean isRunning;
-    public boolean finished = false;
+    public boolean isFinished = false;
     ArrayList<TimesRecord> timeList = new ArrayList<>();
     DefaultListModel<String> listModelLapItems = new DefaultListModel<>();
     enum Status{
@@ -34,7 +35,7 @@ public class StopWatch {
     }
     public void resetFunction() {
         isRunning = false;
-        finished= true;
+        isFinished= true;
         listModelLapItems.removeAllElements();
         timeList.clear();
     }
@@ -59,9 +60,12 @@ public class StopWatch {
 
     public String changeFormatFromMillisToTime(Duration timeDuration) {
         long Millis = timeDuration.toMillis();
+        DecimalFormat formatPattern = new DecimalFormat("00");
+
         long minutes = (Millis / 1000) / 60;
         long seconds = Millis / 1000 % 60;
         long millis = Millis % 1000;
-        return minutes + " : " + seconds + " : " + millis;
+
+        return formatPattern.format(minutes) + " : " + formatPattern.format(seconds) + " : " + formatPattern.format(millis/10) ;
     }
 }
