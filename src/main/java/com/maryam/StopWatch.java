@@ -8,8 +8,9 @@ import java.util.ArrayList;
 
 public class StopWatch {
 
-    public boolean isRunning;
-    public boolean isFinished = false;
+    private static final DecimalFormat TIME_FORMAT = new DecimalFormat("00");
+    private boolean isRunning;
+    private boolean isFinished = false;
     ArrayList<TimesRecord> timeList = new ArrayList<>();
     DefaultListModel<String> listModelLapItems = new DefaultListModel<>();
     enum Status{
@@ -18,33 +19,40 @@ public class StopWatch {
         LAP,
         FINISH
     }
-    public void startFunction() {
+    public boolean isRunning() {
+        return isRunning;
+    }
+
+    public boolean isFinished() {
+        return isFinished;
+    }
+    public void start() {
         isRunning = true;
         TimesRecord timeRecord = new TimesRecord(Instant.now() , Status.START);
         addToTimeList(timeList, timeRecord);
     }
-    public void stopFunction() {
+    public void stop() {
         isRunning = false;
         TimesRecord timeRecord = new TimesRecord(Instant.now() , Status.STOP);
         addToTimeList(timeList, timeRecord);
     }
 
-    public void lapFunction() {
-        TimesRecord timeRecord = new TimesRecord(Instant.now() , Status.LAP);
-        listModelLapItems.addElement(changeFormatFromMillisToTime(calculateDuration(timeList)));
+    public void newLap() {
+        //TimesRecord timeRecord = new TimesRecord(Instant.now() , Status.LAP);
+        listModelLapItems.addElement(format(calculateDuration()));
     }
-    public void resetFunction() {
+    public void reset() {
         isRunning = false;
         isFinished= true;
         listModelLapItems.removeAllElements();
         timeList.clear();
     }
-    public void addToTimeList(ArrayList<TimesRecord> timeList, TimesRecord time) {
+    private void addToTimeList(ArrayList<TimesRecord> timeList, TimesRecord time) {
         timeList.add(time);
     }
 
-    public Duration calculateGaps(ArrayList<TimesRecord> timeList) {
-        Duration gap = Duration.between(Instant.now(), Instant.now());
+    public Duration aggregateGaps() {
+        Duration gap = Duration.ofNanos(0);
         for (int i = 1; i < timeList.size(); i++) {
             if (timeList.get(i).status() == Status.START  && timeList.get(i - 1).status() == Status.STOP) {
                 gap = gap.plus(Duration.between(timeList.get(i - 1).time() , timeList.get(i).time()));
@@ -53,19 +61,18 @@ public class StopWatch {
         return gap;
     }
 
-    public Duration calculateDuration(ArrayList<TimesRecord> timeList) {
-        Duration gap = calculateGaps(timeList);
+    public Duration calculateDuration() {
+        Duration gap = aggregateGaps();
         return Duration.between(timeList.get(0).time() ,Instant.now()).minus(gap);
     }
 
-    public String changeFormatFromMillisToTime(Duration timeDuration) {
-        long Millis = timeDuration.toMillis();
-        DecimalFormat formatPattern = new DecimalFormat("00");
+    public static String format(Duration timeDuration) {
+        long durationMillis = timeDuration.toMillis();
 
-        long minutes = (Millis / 1000) / 60;
-        long seconds = Millis / 1000 % 60;
-        long millis = Millis % 1000;
+        long minutes = (durationMillis / 1000) / 60;
+        long seconds = durationMillis / 1000 % 60;
+        long millis = durationMillis % 1000;
 
-        return formatPattern.format(minutes) + " : " + formatPattern.format(seconds) + " : " + formatPattern.format(millis/10) ;
+        return TIME_FORMAT.format(minutes) + " : " + TIME_FORMAT.format(seconds) + " : " + TIME_FORMAT.format(millis/10) ;
     }
 }
