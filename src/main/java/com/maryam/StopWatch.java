@@ -13,112 +13,83 @@ public class StopWatch implements Serializable {
     private static final long serialVersionUID = 40L;
     private static final DecimalFormat TIME_FORMAT = new DecimalFormat("00");
     private boolean isRunning;
-   ArrayList<TimesRecord> timeList ;
-   DefaultListModel<String> listModelLapItems ;
-    StopWatch(){
+    ArrayList<TimesRecord> timeList;
+    DefaultListModel<String> listModelLapItems;
+
+    StopWatch() {
         timeList = new ArrayList<>();
         listModelLapItems = new DefaultListModel<>();
     }
-    public void setTimeList(ArrayList<TimesRecord> timeList ){
-        this.timeList= timeList;
+
+    public void setTimeList(ArrayList<TimesRecord> timeList) {
+        this.timeList = timeList;
     }
-    enum Status{
+
+    enum Status {
         START,
         STOP,
         LAP,
         FINISH
     }
+
     public boolean getIsRunning() {
         return isRunning;
     }
+
     public void start() {
         isRunning = true;
-        TimesRecord timeRecord = new TimesRecord(Instant.now() , Status.START);
-        if(timeList.isEmpty()) {
+        TimesRecord timeRecord = new TimesRecord(Instant.now(), Status.START);
+        if (timeList.isEmpty()) {
             addToTimeList(timeList, timeRecord);
-        }else if (timeList.get(timeList.size()-1).status() != Status.START ) {
-                addToTimeList(timeList, timeRecord);
+        } else if (timeList.get(timeList.size() - 1).status() != Status.START) {
+            addToTimeList(timeList, timeRecord);
         }
-        System.out.println(timeList);
     }
+
     public void stop() {
-       isRunning = false;
-        TimesRecord timeRecord = new TimesRecord(Instant.now() , Status.STOP);
-        if (timeList.get(timeList.size()-1).status() != Status.STOP ) {
+        isRunning = false;
+        TimesRecord timeRecord = new TimesRecord(Instant.now(), Status.STOP);
+        if (timeList.get(timeList.size() - 1).status() != Status.STOP) {
             addToTimeList(timeList, timeRecord);
         }
 //       timeList.clear();
-        System.out.println(timeList);
     }
+
     public void newLap() {
         //TimesRecord timeRecord = new TimesRecord(Instant.now() , Status.LAP);
         listModelLapItems.addElement(format(calculateDuration()));
     }
+
     public void reset() {
         isRunning = false;
         listModelLapItems.removeAllElements();
         timeList.clear();
     }
+
     private void addToTimeList(ArrayList<TimesRecord> timeList, TimesRecord time) {
         timeList.add(time);
     }
+
     public Duration aggregateGaps() {
         Duration gap = Duration.ofNanos(0);
         for (int i = 1; i < timeList.size(); i++) {
-            if (timeList.get(i).status() == Status.START  && timeList.get(i - 1).status() == Status.STOP) {
-                gap = gap.plus(Duration.between(timeList.get(i - 1).time() , timeList.get(i).time()));
+            if (timeList.get(i).status() == Status.START && timeList.get(i - 1).status() == Status.STOP) {
+                gap = gap.plus(Duration.between(timeList.get(i - 1).time(), timeList.get(i).time()));
             }
         }
         return gap;
     }
+
     public Duration calculateDuration() {
         Duration gap = aggregateGaps();
-        return Duration.between(timeList.get(0).time() ,Instant.now()).minus(gap);
+        return Duration.between(timeList.get(0).time(), Instant.now()).minus(gap);
     }
+
     public static String format(Duration timeDuration) {
         long durationMillis = timeDuration.toMillis();
         long minutes = (durationMillis / 1000) / 60;
         long seconds = durationMillis / 1000 % 60;
         long millis = durationMillis % 1000;
-        return TIME_FORMAT.format(minutes) + " : " + TIME_FORMAT.format(seconds) + " : " + TIME_FORMAT.format(millis/10) ;
+        return TIME_FORMAT.format(minutes) + " : " + TIME_FORMAT.format(seconds) + " : " + TIME_FORMAT.format(millis / 10);
     }
-
-     public void saveFile(Object object){
-        try{
-            FileOutputStream fileOut =new FileOutputStream("timeRecords.ser" + (int)(Math.random()*100));
-            ObjectOutputStream objectOut = new ObjectOutputStream(fileOut);
-            objectOut.writeObject(object);
-            fileOut.close();
-            objectOut.close();
-            System.out.println("saved");
-        }catch(IOException i ) {
-            i.getMessage();
-            System.out.println("not saved");
-        }
-    }
-    public void uploadFile(File name){
-        StopWatch stopWatchFromSavedFile = null;
-        try{
-            FileInputStream fileIn = new FileInputStream(name);
-            ObjectInputStream objectIn = new ObjectInputStream(fileIn);
-            stopWatchFromSavedFile = (StopWatch) objectIn.readObject();
-            setTimeList(stopWatchFromSavedFile.timeList);
-            DefaultListModel<String> fileListModelLapItems = stopWatchFromSavedFile.listModelLapItems;
-            listModelLapItems.removeAllElements();
-            for(int i = 0 ; i<fileListModelLapItems.size() ; i++){
-                listModelLapItems.add(i , fileListModelLapItems.get(i));
-            }
-            System.out.println(listModelLapItems);
-            fileIn.close();
-            objectIn.close();
-        }catch(IOException | ClassNotFoundException i){
-            i.getMessage();
-            System.out.println("not found");
-        }
-    }
-
-
-
-
-
 }
