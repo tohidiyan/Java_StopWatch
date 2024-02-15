@@ -2,20 +2,22 @@ package com.maryam;
 
 import javax.swing.*;
 import java.awt.*;
+import java.io.File;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
-class StopWatchGuiFrame {
+class StopWatchGuiFrame implements StopWatchUserInterface   {
 
-    final StopWatch stopWatch;
+    StopWatch stopWatch;
     final JLabel timeLabel;
-
-    final ScheduledExecutorService timeLabelUpdater;
-    private final int refreshPeriod;
+    ScheduledExecutorService timeLabelUpdater;
+    final private int refreshPeriod;
     ScheduledFuture timeLabelUpdate;
 
+
+//----------------------------------------here should be checked too ---------------------------------------
 
     StopWatchGuiFrame() {
         int refreshRate = GraphicsEnvironment.getLocalGraphicsEnvironment()
@@ -26,22 +28,21 @@ class StopWatchGuiFrame {
             refreshRate = 1000;
         }
         refreshPeriod = 1000/refreshRate;
+        timeLabelUpdater=Executors.newScheduledThreadPool(1);
+
         timeLabel = new JLabel("00 : 00 : 00");
         stopWatch = new StopWatch();
-        timeLabelUpdater=Executors.newScheduledThreadPool(1);
-        createMainWindow();
     }
 
-    private void createMainWindow() {
+    @Override
+    public void startUserInterface() {
         JFrame myFrame = new JFrame();
         myFrame.setTitle("stop watch");
-        myFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        myFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE );
         myFrame.setSize(300, 300);
         addMainPanelToWindow(myFrame);
         myFrame.setVisible(true);
     }
-
-
     private void addMainPanelToWindow(JFrame myFrame) {
         JPanel myPanel = new JPanel();
         JPanel labelPanel = new JPanel();
@@ -51,13 +52,16 @@ class StopWatchGuiFrame {
         myPanel.add(buttonPanel, BorderLayout.CENTER);
         myPanel.add(lapPanel, BorderLayout.SOUTH);
 
-        labelPanel.add(timeLabel);
         JList<String> jList = new JList<>(stopWatch.listModelLapItems);
         JScrollPane jScrollPane = new JScrollPane(jList);
-
         lapPanel.add(jScrollPane, BorderLayout.CENTER);
+
+        labelPanel.add(timeLabel);
+
         lapPanel.setSize(200, 150);
-        JButton lapButton = createLapButton();
+        labelPanel.add(createUploadButton());
+        labelPanel.add(createSaveButton());
+        JButton lapButton = createLapButton(lapPanel);
         JButton stopButton = createStopButton(lapButton);
         JButton startButton = createStartButton(stopButton, lapButton);
         JButton resetButton = createResetButton(lapButton, stopButton);
@@ -70,20 +74,53 @@ class StopWatchGuiFrame {
         myFrame.add(myPanel);
     }
 
+
+    private JButton createSaveButton(){
+        JButton saveButton = new JButton("Save");
+        saveButton.addActionListener((e)->{
+            stopWatch.saveFile(stopWatch);
+            if(stopWatch.getIsRunning()){
+                stopWatch.stop();
+            }
+            timeLabelUpdate.cancel(true);
+
+        });
+        return saveButton;
+    }
+    private JButton createUploadButton(){
+        JButton uploadButton = new JButton("Upload");
+        uploadButton.addActionListener((e)->{
+            stopWatch.uploadFile(openFile());
+
+            System.out.println(StopWatch.format(stopWatch.calculateDuration()));
+        });
+        return uploadButton;
+    }
+    public File openFile(){
+        File file = null;
+        JFileChooser fileChooser = new JFileChooser();
+        int response = fileChooser.showOpenDialog(null);
+        fileChooser.setCurrentDirectory(new File("/home/maryam/Dokumente/Java/StopWatch/"));
+        if (response==JFileChooser.APPROVE_OPTION){
+            file = new File(fileChooser.getSelectedFile().getAbsolutePath());
+            System.out.println(file);
+        }
+        return file;
+    }
+
+
     private JButton createStartButton(JButton stopButton, JButton lapButton) {
         JButton startButton = new JButton("start");
         startButton.addActionListener((e) -> {
             stopWatch.start();
             stopButton.setEnabled(true);
             lapButton.setEnabled(true);
-
             timeLabelUpdate = timeLabelUpdater.scheduleAtFixedRate(() -> {
-                timeLabel.setText(StopWatch.format(stopWatch.calculateDuration()));
+               timeLabel.setText(StopWatch.format(stopWatch.calculateDuration()));
             }, 0, refreshPeriod, TimeUnit.MILLISECONDS);
         });
         return startButton;
     }
-
     private JButton createStopButton(JButton lapButton) {
         JButton stopButton = new JButton("stop");
         stopButton.addActionListener((e) -> {
@@ -91,29 +128,33 @@ class StopWatchGuiFrame {
             timeLabelUpdate.cancel(false);
             timeLabel.setText(StopWatch.format(stopWatch.calculateDuration()));
             lapButton.setEnabled(false);
+            stopButton.setEnabled(false);
         });
         return stopButton;
     }
-
-    private JButton createLapButton() {
-        JButton lapButton = new JButton("lap");
-        lapButton.addActionListener((e) -> stopWatch.newLap());
-        return lapButton;
-    }
-
     private JButton createResetButton(JButton lapButton, JButton stopButton) {
         JButton resetButton = new JButton("Reset");
         resetButton.addActionListener((e) -> {
             stopWatch.reset();
-            timeLabelUpdate.cancel(false);
+            timeLabelUpdate.cancel(true);
             timeLabel.setText("00 : 00 : 00");
             lapButton.setEnabled(false);
             stopButton.setEnabled(false);
+
         });
         return resetButton;
     }
-
-    void close(){
-        timeLabelUpdater.shutdownNow();
+    private JButton createLapButton(JPanel lapPanel) {
+        JButton lapButton = new JButton("lap");
+        lapButton.addActionListener((e) ->{
+            stopWatch.newLap();
+                }
+        );
+        return lapButton;
     }
+
+
+
+
+
 }

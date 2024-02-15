@@ -1,56 +1,67 @@
 package com.maryam;
 
 import javax.swing.*;
+import java.io.*;
 import java.text.DecimalFormat;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 
-public class StopWatch {
+public class StopWatch implements Serializable {
 
+    @Serial
+    private static final long serialVersionUID = 40L;
     private static final DecimalFormat TIME_FORMAT = new DecimalFormat("00");
     private boolean isRunning;
-    private boolean isFinished = false;
-    ArrayList<TimesRecord> timeList = new ArrayList<>();
-    DefaultListModel<String> listModelLapItems = new DefaultListModel<>();
+   ArrayList<TimesRecord> timeList ;
+   DefaultListModel<String> listModelLapItems ;
+    StopWatch(){
+        timeList = new ArrayList<>();
+        listModelLapItems = new DefaultListModel<>();
+    }
+    public void setTimeList(ArrayList<TimesRecord> timeList ){
+        this.timeList= timeList;
+    }
     enum Status{
         START,
         STOP,
         LAP,
         FINISH
     }
-    public boolean isRunning() {
+    public boolean getIsRunning() {
         return isRunning;
-    }
-
-    public boolean isFinished() {
-        return isFinished;
     }
     public void start() {
         isRunning = true;
         TimesRecord timeRecord = new TimesRecord(Instant.now() , Status.START);
-        addToTimeList(timeList, timeRecord);
+        if(timeList.isEmpty()) {
+            addToTimeList(timeList, timeRecord);
+        }else if (timeList.get(timeList.size()-1).status() != Status.START ) {
+                addToTimeList(timeList, timeRecord);
+        }
+        System.out.println(timeList);
     }
     public void stop() {
-        isRunning = false;
+       isRunning = false;
         TimesRecord timeRecord = new TimesRecord(Instant.now() , Status.STOP);
-        addToTimeList(timeList, timeRecord);
+        if (timeList.get(timeList.size()-1).status() != Status.STOP ) {
+            addToTimeList(timeList, timeRecord);
+        }
+//       timeList.clear();
+        System.out.println(timeList);
     }
-
     public void newLap() {
         //TimesRecord timeRecord = new TimesRecord(Instant.now() , Status.LAP);
         listModelLapItems.addElement(format(calculateDuration()));
     }
     public void reset() {
         isRunning = false;
-        isFinished= true;
         listModelLapItems.removeAllElements();
         timeList.clear();
     }
     private void addToTimeList(ArrayList<TimesRecord> timeList, TimesRecord time) {
         timeList.add(time);
     }
-
     public Duration aggregateGaps() {
         Duration gap = Duration.ofNanos(0);
         for (int i = 1; i < timeList.size(); i++) {
@@ -60,19 +71,54 @@ public class StopWatch {
         }
         return gap;
     }
-
     public Duration calculateDuration() {
         Duration gap = aggregateGaps();
         return Duration.between(timeList.get(0).time() ,Instant.now()).minus(gap);
     }
-
     public static String format(Duration timeDuration) {
         long durationMillis = timeDuration.toMillis();
-
         long minutes = (durationMillis / 1000) / 60;
         long seconds = durationMillis / 1000 % 60;
         long millis = durationMillis % 1000;
-
         return TIME_FORMAT.format(minutes) + " : " + TIME_FORMAT.format(seconds) + " : " + TIME_FORMAT.format(millis/10) ;
     }
+
+     public void saveFile(Object object){
+        try{
+            FileOutputStream fileOut =new FileOutputStream("timeRecords.ser" + (int)(Math.random()*100));
+            ObjectOutputStream objectOut = new ObjectOutputStream(fileOut);
+            objectOut.writeObject(object);
+            fileOut.close();
+            objectOut.close();
+            System.out.println("saved");
+        }catch(IOException i ) {
+            i.getMessage();
+            System.out.println("not saved");
+        }
+    }
+    public void uploadFile(File name){
+        StopWatch stopWatchFromSavedFile = null;
+        try{
+            FileInputStream fileIn = new FileInputStream(name);
+            ObjectInputStream objectIn = new ObjectInputStream(fileIn);
+            stopWatchFromSavedFile = (StopWatch) objectIn.readObject();
+            setTimeList(stopWatchFromSavedFile.timeList);
+            DefaultListModel<String> fileListModelLapItems = stopWatchFromSavedFile.listModelLapItems;
+            listModelLapItems.removeAllElements();
+            for(int i = 0 ; i<fileListModelLapItems.size() ; i++){
+                listModelLapItems.add(i , fileListModelLapItems.get(i));
+            }
+            System.out.println(listModelLapItems);
+            fileIn.close();
+            objectIn.close();
+        }catch(IOException | ClassNotFoundException i){
+            i.getMessage();
+            System.out.println("not found");
+        }
+    }
+
+
+
+
+
 }
