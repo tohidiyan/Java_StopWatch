@@ -12,29 +12,19 @@ public class StopWatch implements Serializable {
     @Serial
     private static final long serialVersionUID = 40L;
     private static final DecimalFormat TIME_FORMAT = new DecimalFormat("00");
-    private boolean isRunning;
-    ArrayList<TimesRecord> timeList;
-    DefaultListModel<String> listModelLapItems;
-
-    StopWatch() {
-        timeList = new ArrayList<>();
-        listModelLapItems = new DefaultListModel<>();
-    }
-
-    public void setTimeList(ArrayList<TimesRecord> timeList) {
-        this.timeList = timeList;
-    }
+    public boolean isRunning;
+    ArrayList<TimesRecord> timeList= new ArrayList<>();
+    ArrayList<String> lapList = new ArrayList<>();
 
     enum Status {
         START,
         STOP,
         LAP,
-        FINISH
+        SAVED
     }
-
-    public boolean getIsRunning() {
-        return isRunning;
-    }
+ /*   public boolean isRunning(){
+        return isRunning();
+    };*/
 
     public void start() {
         isRunning = true;
@@ -45,24 +35,22 @@ public class StopWatch implements Serializable {
             addToTimeList(timeList, timeRecord);
         }
     }
-
     public void stop() {
         isRunning = false;
         TimesRecord timeRecord = new TimesRecord(Instant.now(), Status.STOP);
         if (timeList.get(timeList.size() - 1).status() != Status.STOP) {
             addToTimeList(timeList, timeRecord);
         }
-//       timeList.clear();
     }
 
     public void newLap() {
         //TimesRecord timeRecord = new TimesRecord(Instant.now() , Status.LAP);
-        listModelLapItems.addElement(format(calculateDuration()));
+        lapList.add(format(calculateDuration()));
     }
 
     public void reset() {
         isRunning = false;
-        listModelLapItems.removeAllElements();
+        lapList.clear();
         timeList.clear();
     }
 
